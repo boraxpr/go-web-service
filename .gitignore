@@ -1,0 +1,31 @@
+# Compiled Go binaries
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Go build artifacts
+*.o
+*.a
+
+# Go test and coverage files
+*.test
+*.out
+*.prof
+
+# Dependency directories
+vendor/
+go.sum
+
+# IDE and editor-specific files
+.idea/
+.vscode/
+*.sublime-workspace
+
+# Compiled output directories
+/bin/
+/pkg/
+
+.air.toml
+/tmp
+.air.toml
