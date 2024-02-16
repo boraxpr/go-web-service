@@ -1,28 +1,56 @@
 package main
 
 import (
+	"context"
 	"fmt"
+	"log"
 	"net/http"
+	"os"
 
+	"github.com/boraxpr/go-web-service/db"
 	"github.com/boraxpr/go-web-service/handlers"
+	"github.com/jackc/pgx/v5"
+	"github.com/joho/godotenv"
 )
 
 func main() {
-	mux := http.NewServeMux()
+	// Load environment variables from a .env file
+	if err := godotenv.Load(); err != nil {
+		log.Fatalf("Error loading .env file: %v", err)
+	}
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080" // Default to port 8080 if PORT environment variable is not set
+	}
+	// Connect to db
+	conn, err := pgx.Connect(context.Background(), os.Getenv("DB_STRING"))
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Unable to connect to database: %v\n", err)
+		os.Exit(1)
+	}
+	defer conn.Close(context.Background())
+	// Create an instance of App with the database connection
+	app := &db.App{DB: conn}
 
-	// Wrap the DefaultHandler with the LoggingMiddleware
-	mux.Handle("/", handlers.LoggingMiddleware(http.HandlerFunc(handlers.DefaultHandler)))
+	mux := http.NewServeMux()
+	mux.Handle("/", handlers.LoggingMiddleware(http.HandlerFunc(DefaultHandler(app))))
 
 	// Wrap the PingHandler with both the LoggingMiddleware and AuthMiddleware
 	mux.Handle("/ping", handlers.LoggingMiddleware(handlers.AuthMiddleware(http.HandlerFunc(handlers.PingHandler))))
 
 	mux.Handle(
 		"/quotation",
-		handlers.LoggingMiddleware(handlers.AuthMiddleware(http.HandlerFunc(handlers.QuotationHandler))),
+		handlers.LoggingMiddleware(handlers.AuthMiddleware(http.HandlerFunc(handlers.QuotationHandler(app)))),
 	)
 
-	fmt.Println("Server listening on :8080")
-	if err := http.ListenAndServe(":8080", mux); err != nil {
+	fmt.Printf("Server listening on %s", port)
+	if err := http.ListenAndServe(":"+port, mux); err != nil {
 		fmt.Printf("Error starting server: %s\n", err)
+	}
+}
+func DefaultHandler(app *db.App) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusNotFound)
+		fmt.Fprintln(w, "404 Not Found - Page not found")
 	}
 }
