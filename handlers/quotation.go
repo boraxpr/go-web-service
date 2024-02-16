@@ -30,6 +30,11 @@ type Quotation struct {
 
 func QuotationHandler(app *db.App) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != "GET" {
+			http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
+			return
+
+		}
 		// Use db to query the database
 		rows, err := app.DB.Query(context.Background(), "SELECT * FROM quotation")
 		if err != nil {
