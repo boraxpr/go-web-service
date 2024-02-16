@@ -28,3 +28,4 @@ go.sum
 
 .air.toml
 /tmp
+dockerfile

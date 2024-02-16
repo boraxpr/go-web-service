@@ -16,6 +16,11 @@ func main() {
 	// Wrap the PingHandler with both the LoggingMiddleware and AuthMiddleware
 	mux.Handle("/ping", handlers.LoggingMiddleware(handlers.AuthMiddleware(http.HandlerFunc(handlers.PingHandler))))
 
+	mux.Handle(
+		"/quotation",
+		handlers.LoggingMiddleware(handlers.AuthMiddleware(http.HandlerFunc(handlers.QuotationHandler))),
+	)
+
 	fmt.Println("Server listening on :8080")
 	if err := http.ListenAndServe(":8080", mux); err != nil {
 		fmt.Printf("Error starting server: %s\n", err)

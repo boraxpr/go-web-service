@@ -1,7 +1,6 @@
 module github.com/boraxpr/go-web-service
 
-go 1.23
-
+go 1.22
 require (
 	dario.cat/mergo v1.0.0 // indirect
 	github.com/bep/godartsass v1.2.0 // indirect
