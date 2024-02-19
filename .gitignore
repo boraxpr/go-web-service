@@ -15,7 +15,7 @@
 
 # Dependency directories
 vendor/
-go.sum
+
 
 # IDE and editor-specific files
 .idea/
