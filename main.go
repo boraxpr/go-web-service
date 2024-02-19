@@ -22,6 +22,7 @@ func main() {
 	if port == "" {
 		port = "8080" // Default to port 8080 if PORT environment variable is not set
 	}
+	secret_key := os.Getenv("SECRET_KEY")
 	// Connect to db
 	conn, err := pgx.Connect(context.Background(), os.Getenv("DB_STRING"))
 	if err != nil {
@@ -33,24 +34,23 @@ func main() {
 	app := &db.App{DB: conn}
 
 	mux := http.NewServeMux()
-	mux.Handle("/", handlers.LoggingMiddleware(http.HandlerFunc(DefaultHandler(app))))
+	mux.Handle("/", handlers.LoggingMiddleware(http.HandlerFunc(handlers.DefaultHandler(app))))
 
 	// Wrap the PingHandler with both the LoggingMiddleware and AuthMiddleware
-	mux.Handle("/ping", handlers.LoggingMiddleware(handlers.AuthMiddleware(http.HandlerFunc(handlers.PingHandler))))
+	mux.Handle(
+		"/ping",
+		handlers.LoggingMiddleware(handlers.AuthMiddleware(http.HandlerFunc(handlers.PingHandler), secret_key)),
+	)
 
 	mux.Handle(
 		"/quotation",
-		handlers.LoggingMiddleware(handlers.AuthMiddleware(http.HandlerFunc(handlers.QuotationHandler(app)))),
+		handlers.LoggingMiddleware(
+			handlers.AuthMiddleware(http.HandlerFunc(handlers.GetAllQuotationsHandler(app)), secret_key),
+		),
 	)
 
 	fmt.Printf("Server listening on %s", port)
 	if err := http.ListenAndServe(":"+port, mux); err != nil {
 		fmt.Printf("Error starting server: %s\n", err)
-	}
-}
-func DefaultHandler(app *db.App) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusNotFound)
-		fmt.Fprintln(w, "404 Not Found - Page not found")
 	}
 }

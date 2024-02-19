@@ -10,7 +10,7 @@ import (
 )
 
 type Quotation struct {
-	DocNum      int64           `db:"doc_num"`
+	DocNum      uint32          `db:"doc_num"`
 	CreatedDate sql.NullTime    `db:"created_date"`
 	Status      sql.NullString  `db:"status"`
 	Currency    sql.NullString  `db:"currency"`
@@ -28,7 +28,7 @@ type Quotation struct {
 	Running     sql.NullString  `db:"running"`
 }
 
-func QuotationHandler(app *db.App) http.HandlerFunc {
+func GetAllQuotationsHandler(app *db.App) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != "GET" {
 			http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
