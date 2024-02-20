@@ -2,21 +2,22 @@ package handlers
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/golang-jwt/jwt/v5"
 
 	"net/http"
-	"strings"
 )
 
+// important key is to fetch from frontend by using credentials :"include"
 func VerifyToken(requestToken string, SecretKey string) bool {
-	splitToken := strings.Split(requestToken, "Bearer ")
-	if len(splitToken) != 2 {
-		fmt.Println("malformed token")
+	if requestToken == "" {
 		return false
 	}
-	requestToken = splitToken[1]
+	strings.Split(requestToken, "=")
+	requestToken = requestToken[strings.Index(requestToken, "=")+1:]
 
+	fmt.Println("Verifying token: ", requestToken)
 	token, err := jwt.Parse(requestToken,
 		func(t *jwt.Token) (interface{}, error) {
 			return []byte(SecretKey), nil
@@ -42,7 +43,8 @@ func LoggingMiddleware(next http.Handler) http.Handler {
 func AuthMiddleware(next http.Handler, SecretKey string) http.Handler {
 	return http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
-			requestToken := r.Header.Get("Authorization")
+			requestToken := r.Header.Get("Cookie")
+
 			if !VerifyToken(requestToken, SecretKey) {
 				http.Error(w, "Unauthorized", http.StatusUnauthorized)
 				return

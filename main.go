@@ -38,8 +38,10 @@ func main() {
 
 	// Wrap the PingHandler with both the LoggingMiddleware and AuthMiddleware
 	mux.Handle(
-		"/ping",
-		handlers.LoggingMiddleware(handlers.AuthMiddleware(http.HandlerFunc(handlers.PingHandler), secret_key)),
+		"/login",
+		handlers.LoggingMiddleware(
+			http.HandlerFunc(handlers.LoginHandler(secret_key)),
+		),
 	)
 
 	mux.Handle(
@@ -49,8 +51,21 @@ func main() {
 		),
 	)
 
+	// Apply CORS middleware to your router
+	handler := corsMiddleware(mux)
 	fmt.Printf("Server listening on %s", port)
-	if err := http.ListenAndServe(":"+port, mux); err != nil {
+	if err := http.ListenAndServe(":"+port, handler); err != nil {
 		fmt.Printf("Error starting server: %s\n", err)
 	}
+}
+
+func corsMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
+		w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
+		w.Header().
+			Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
+		w.Header().Set("Access-Control-Allow-Credentials", "true")
+		next.ServeHTTP(w, r)
+	})
 }
