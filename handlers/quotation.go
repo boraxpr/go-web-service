@@ -36,7 +36,7 @@ type Quotation struct {
 // @Produce  json
 // @Success 200 {array} Quotation
 // @Router /quotation [get]
-func GetAllQuotationsHandler(app *db.App) http.HandlerFunc {
+func GetAllQuotations(app *db.App) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != "GET" {
 			http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)

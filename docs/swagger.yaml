@@ -77,13 +77,35 @@ definitions:
         description: Valid is true if Time is not NULL
         type: boolean
     type: object
-host: localhost:8080
 info:
   contact: {}
   description: This is a sample server for a Go web service.
   title: Go Web Service API
   version: "1.0"
 paths:
+  /login:
+    post:
+      consumes:
+      - application/json
+      description: Authenticates a user and returns a session token.
+      parameters:
+      - description: Secret Key
+        in: query
+        name: secretKey
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Login successful
+          schema:
+            type: string
+        "400":
+          description: Error generating token string
+          schema:
+            type: string
+      summary: User login
   /quotation:
     get:
       consumes:

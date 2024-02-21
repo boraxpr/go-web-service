@@ -8,8 +8,23 @@ import (
 	"github.com/golang-jwt/jwt"
 )
 
+type Credentials struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
+
+// LoginHandler authenticates a user and returns a session token.
+// @Summary User login
+// @Description Authenticates a user and returns a session token.
+// @Accept  json
+// @Produce  json
+// @Param   secretKey     query    string     true  "Secret Key"
+// @Success 200 {string} string "Login successful"
+// @Failure 400 {string} string "Error generating token string"
+// @Router /login [post]
 func LoginHandler(secretKey string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+
 		token, err := GenerateJWT(secretKey)
 		if err != nil {
 			fmt.Println("Error generating token string")
@@ -25,6 +40,7 @@ func LoginHandler(secretKey string) http.HandlerFunc {
 			MaxAge:   24 * 60 * 60,
 			HttpOnly: true,
 			Secure:   false,
+			SameSite: http.SameSiteLaxMode,
 			Path:     "/"}
 
 		// Set the cookie in the response header

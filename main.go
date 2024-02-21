@@ -8,6 +8,7 @@ import (
 	"os"
 
 	"github.com/boraxpr/go-web-service/db"
+	_ "github.com/boraxpr/go-web-service/docs"
 	"github.com/boraxpr/go-web-service/handlers"
 	"github.com/jackc/pgx/v5"
 	"github.com/joho/godotenv"
@@ -18,7 +19,7 @@ import (
 // @version 1.0
 // @description This is a sample server for a Go web service.
 
-// @host localhost:8080
+// @host
 // @BasePath /
 func main() {
 	// Load environment variables from a .env file
@@ -41,11 +42,9 @@ func main() {
 	app := &db.App{DB: conn}
 
 	mux := http.NewServeMux()
-	mux.Handle("/", handlers.LoggingMiddleware(http.HandlerFunc(handlers.DefaultHandler(app))))
 
-	mux.Handle("/swagger/*", httpSwagger.Handler(
-		httpSwagger.URL("/docs/swagger.json"),
-	))
+	mux.Handle("/swagger/", handlers.SwaggerAuth(httpSwagger.Handler(), secret_key))
+	mux.Handle("/", handlers.LoggingMiddleware(http.HandlerFunc(handlers.Default(app))))
 
 	// Wrap the PingHandler with both the LoggingMiddleware and AuthMiddleware
 	mux.Handle(
@@ -58,7 +57,7 @@ func main() {
 	mux.Handle(
 		"/quotation",
 		handlers.LoggingMiddleware(
-			handlers.AuthMiddleware(http.HandlerFunc(handlers.GetAllQuotationsHandler(app)), secret_key),
+			handlers.AuthMiddleware(http.HandlerFunc(handlers.GetAllQuotations(app)), secret_key),
 		),
 	)
 

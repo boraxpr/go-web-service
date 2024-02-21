@@ -32,6 +32,19 @@ func VerifyToken(requestToken string, SecretKey string) bool {
 	}
 }
 
+func SwaggerAuth(next http.Handler, secretKey string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		user, token, ok := r.BasicAuth()
+		if !ok || user != "admin" || !VerifyToken(token, secretKey) {
+			w.Header().Set("WWW-Authenticate", `Basic realm="Please enter your token"`)
+			w.WriteHeader(401)
+			w.Write([]byte("Unauthorized.\n"))
+			return
+		}
+		next.ServeHTTP(w, r)
+	}
+}
+
 func LoggingMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
