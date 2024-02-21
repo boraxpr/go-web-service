@@ -30,6 +30,12 @@ type Quotation struct {
 	CustomerName sql.NullString  `db:"customer_name"`
 }
 
+// @Summary Get all quotations
+// @Description Returns all quotations
+// @Accept  json
+// @Produce  json
+// @Success 200 {array} Quotation
+// @Router /quotation [get]
 func GetAllQuotationsHandler(app *db.App) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != "GET" {

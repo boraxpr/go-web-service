@@ -11,8 +11,15 @@ import (
 	"github.com/boraxpr/go-web-service/handlers"
 	"github.com/jackc/pgx/v5"
 	"github.com/joho/godotenv"
+	httpSwagger "github.com/swaggo/http-swagger/v2"
 )
 
+// @title Go Web Service API
+// @version 1.0
+// @description This is a sample server for a Go web service.
+
+// @host localhost:8080
+// @BasePath /
 func main() {
 	// Load environment variables from a .env file
 	if err := godotenv.Load(); err != nil {
@@ -35,6 +42,10 @@ func main() {
 
 	mux := http.NewServeMux()
 	mux.Handle("/", handlers.LoggingMiddleware(http.HandlerFunc(handlers.DefaultHandler(app))))
+
+	mux.Handle("/swagger/*", httpSwagger.Handler(
+		httpSwagger.URL("/docs/swagger.json"),
+	))
 
 	// Wrap the PingHandler with both the LoggingMiddleware and AuthMiddleware
 	mux.Handle(
