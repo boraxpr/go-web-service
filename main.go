@@ -60,7 +60,13 @@ func main() {
 			handlers.AuthMiddleware(http.HandlerFunc(handlers.GetAllQuotations(app)), secret_key),
 		),
 	)
-
+	mux.Handle(
+		"/session",
+		handlers.LoggingMiddleware(
+			handlers.AuthMiddleware(http.HandlerFunc(handlers.SessionHandler), secret_key),
+		),
+	)
+	mux.Handle("")
 	// Apply CORS middleware to your router
 	handler := corsMiddleware(mux)
 	fmt.Printf("Server listening on %s", port)

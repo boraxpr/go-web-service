@@ -23,4 +23,5 @@ $ > swag init ./ --parseDependency
 - Manual testing can be done through swagger 2.0 API documents.
 
 ### Design Patterns
-- Chain of Responsibility
+- Chain of Responsibility : Middleware
+- Dependency Injection : Singleton database connection + Pgxpool concurrency supported
