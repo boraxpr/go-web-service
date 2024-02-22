@@ -1,9 +1,11 @@
 // db/app.go
 package db
 
-import "github.com/jackc/pgx/v5"
+import (
+	"github.com/jackc/pgx/v5/pgxpool"
+)
 
 // App struct holds the dependencies for the application
 type App struct {
-	DB *pgx.Conn
+	DB *pgxpool.Pool
 }

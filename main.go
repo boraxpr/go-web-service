@@ -10,7 +10,7 @@ import (
 	"github.com/boraxpr/go-web-service/db"
 	_ "github.com/boraxpr/go-web-service/docs"
 	"github.com/boraxpr/go-web-service/handlers"
-	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joho/godotenv"
 	httpSwagger "github.com/swaggo/http-swagger/v2"
 )
@@ -32,14 +32,14 @@ func main() {
 	}
 	secret_key := os.Getenv("SECRET_KEY")
 	// Connect to db
-	conn, err := pgx.Connect(context.Background(), os.Getenv("DB_STRING"))
+	pool, err := pgxpool.New(context.Background(), os.Getenv("DB_STRING"))
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Unable to connect to database: %v\n", err)
 		os.Exit(1)
 	}
-	defer conn.Close(context.Background())
+	defer pool.Close()
 	// Create an instance of App with the database connection
-	app := &db.App{DB: conn}
+	app := &db.App{DB: pool}
 
 	mux := http.NewServeMux()
 
