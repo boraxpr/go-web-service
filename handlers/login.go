@@ -24,7 +24,7 @@ type Credentials struct {
 // @Router /login [post]
 func LoginHandler(secretKey string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-
+		// TODO: receive username and password from body
 		token, err := GenerateJWT(secretKey)
 		if err != nil {
 			fmt.Println("Error generating token string")
@@ -40,7 +40,7 @@ func LoginHandler(secretKey string) http.HandlerFunc {
 			MaxAge:   24 * 60 * 60,
 			HttpOnly: true,
 			Secure:   false,
-			SameSite: http.SameSiteLaxMode,
+			SameSite: http.SameSiteStrictMode,
 			Path:     "/"}
 
 		// Set the cookie in the response header
@@ -48,6 +48,8 @@ func LoginHandler(secretKey string) http.HandlerFunc {
 		w.Write([]byte("Login successful"))
 	}
 }
+
+// TODO: Pass needed parameters in the request
 func GenerateJWT(SecretKey string) (string, error) {
 	token := jwt.New(jwt.SigningMethodHS256)
 

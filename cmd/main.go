@@ -10,6 +10,7 @@ import (
 	"github.com/boraxpr/go-web-service/db"
 	_ "github.com/boraxpr/go-web-service/docs"
 	"github.com/boraxpr/go-web-service/handlers"
+	dao "github.com/boraxpr/go-web-service/internal/dao"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joho/godotenv"
 	httpSwagger "github.com/swaggo/http-swagger/v2"
@@ -41,6 +42,8 @@ func main() {
 	// Create an instance of App with the database connection
 	app := &db.App{DB: pool}
 
+	quotationDAO := dao.NewQuotationDao(app)
+
 	mux := http.NewServeMux()
 
 	mux.Handle("/swagger/", handlers.SwaggerAuth(httpSwagger.Handler(), secret_key))
@@ -57,7 +60,7 @@ func main() {
 	mux.Handle(
 		"/quotation",
 		handlers.LoggingMiddleware(
-			handlers.AuthMiddleware(http.HandlerFunc(handlers.GetAllQuotations(app)), secret_key),
+			handlers.AuthMiddleware(http.HandlerFunc(handlers.GetAllQuotations(quotationDAO)), secret_key),
 		),
 	)
 	mux.Handle(
@@ -66,7 +69,6 @@ func main() {
 			handlers.AuthMiddleware(http.HandlerFunc(handlers.SessionHandler), secret_key),
 		),
 	)
-	mux.Handle("")
 	// Apply CORS middleware to your router
 	handler := corsMiddleware(mux)
 	fmt.Printf("Server listening on %s", port)
