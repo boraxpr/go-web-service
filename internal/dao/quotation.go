@@ -48,11 +48,11 @@ func (q *QuotationDao) GetAll() ([]*Quotation, error) {
 		context.Background(),
 		"SELECT quotation.doc_num, quotation.created_date, quotation.status, quotation.currency, quotation.project_name, quotation.grand_total, quotation.customer_id, quotation.due_date, quotation.updated_at, quotation.is_active, quotation.credit_day, quotation.remark, quotation.note, quotation.attachment, quotation.updated_by, quotation.running, customers.customer_name FROM quotation JOIN customers ON quotation.customer_id = customers.id",
 	)
-	defer rows.Close()
 
 	if err != nil {
 		return nil, err
 	}
+	defer rows.Close()
 
 	var result []*Quotation
 	for rows.Next() {
