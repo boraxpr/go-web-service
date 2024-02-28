@@ -64,6 +64,12 @@ func main() {
 		),
 	)
 	mux.Handle(
+		"/quotation/",
+		handlers.LoggingMiddleware(
+			handlers.AuthMiddleware(http.HandlerFunc(handlers.GetQuotationById(quotationDAO)), secret_key),
+		),
+	)
+	mux.Handle(
 		"/session",
 		handlers.LoggingMiddleware(
 			handlers.AuthMiddleware(http.HandlerFunc(handlers.SessionHandler), secret_key),

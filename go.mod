@@ -33,6 +33,7 @@ require (
 	github.com/creack/pty v1.1.21 // indirect
 	github.com/fatih/color v1.16.0 // indirect
 	github.com/fsnotify/fsnotify v1.7.0 // indirect
+	github.com/georgysavva/scany/v2 v2.1.0
 	github.com/gohugoio/hugo v0.122.0 // indirect
 	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/golang-jwt/jwt/v5 v5.2.0
