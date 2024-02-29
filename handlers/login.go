@@ -3,6 +3,7 @@ package handlers
 import (
 	"fmt"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/golang-jwt/jwt"
@@ -22,8 +23,9 @@ type Credentials struct {
 // @Success 200 {string} string "Login successful"
 // @Failure 400 {string} string "Error generating token string"
 // @Router /login [post]
-func LoginHandler(secretKey string) http.HandlerFunc {
+func LoginHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		secretKey := os.Getenv("SECRET_KEY")
 		// TODO: receive username and password from body
 		token, err := GenerateJWT(secretKey)
 		if err != nil {

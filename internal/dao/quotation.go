@@ -4,8 +4,8 @@ import (
 	"context"
 	"database/sql"
 
-	"github.com/boraxpr/go-web-service/db"
 	"github.com/georgysavva/scany/v2/pgxscan"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -33,8 +33,8 @@ type QuotationDao struct {
 	db *pgxpool.Pool
 }
 
-func NewQuotationDao(app *db.App) Dao[Quotation] {
-	return &QuotationDao{db: app.DB}
+func NewQuotationDao(pool *pgxpool.Pool) Dao[Quotation] {
+	return &QuotationDao{db: pool}
 }
 
 func (q *QuotationDao) Get(id uint32) (Quotation, error) {
@@ -47,8 +47,8 @@ func (q *QuotationDao) Get(id uint32) (Quotation, error) {
 		"SELECT quotation.doc_num, quotation.created_date, quotation.status, quotation.currency, quotation.project_name, quotation.grand_total, quotation.customer_id, quotation.due_date, quotation.updated_at, quotation.is_active, quotation.credit_day, quotation.remark, quotation.note, quotation.attachment, quotation.updated_by, quotation.running, customers.customer_name FROM quotation LEFT JOIN customers ON quotation.customer_id = customers.id WHERE doc_num = $1",
 		id,
 	)
-	if err != nil {
-		return quotation, err
+	if err != nil && pgxscan.NotFound(err) {
+		return quotation, pgx.ErrNoRows
 	}
 	return quotation, nil
 }

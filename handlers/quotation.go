@@ -1,13 +1,14 @@
 package handlers
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"strconv"
-	"strings"
 
 	internal "github.com/boraxpr/go-web-service/internal/dao"
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/render"
+	"github.com/jackc/pgx/v5"
 )
 
 // @Summary Get all quotations
@@ -18,26 +19,15 @@ import (
 // @Router /quotation [get]
 func GetAllQuotations(quotationDAO internal.Dao[internal.Quotation]) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != "GET" {
-			http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
-			return
-
-		}
-		fmt.Println("GetAllQuotationsHandler")
 
 		result, err := quotationDAO.GetAll()
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			render.Status(r, http.StatusInternalServerError)
+			render.JSON(w, r, &ErrResponse{Err: err})
 			return
 		}
-		jsonResult, err := json.Marshal(result)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		w.Write(jsonResult)
+		render.Status(r, http.StatusOK)
+		render.JSON(w, r, result)
 	}
 }
 
@@ -49,39 +39,33 @@ func GetAllQuotations(quotationDAO internal.Dao[internal.Quotation]) http.Handle
 // @Router /quotation/{id} [get]
 func GetQuotationById(quotationDAO internal.Dao[internal.Quotation]) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != "GET" {
-			http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
-			return
-		}
 		fmt.Println("GetQuotationHandler")
-		id := strings.TrimPrefix(r.URL.Path, "/quotation/")
-
-		if id == "" {
-			http.Error(w, "Invalid quotation ID", http.StatusBadRequest)
+		idParam := chi.URLParam(r, "id")
+		if idParam == "" {
+			render.Status(r, http.StatusBadRequest)
+			render.JSON(w, r, ErrInvalidRequest(nil))
 			return
 		}
-		id32, err := strconv.ParseUint(id, 10, 32)
+		id32, err := strconv.ParseUint(idParam, 10, 32)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			render.Status(r, http.StatusBadRequest)
+			render.JSON(w, r, ErrInvalidRequest(err))
 			return
 		}
 
 		result, err := quotationDAO.Get(uint32(id32))
-		if err != nil {
-			if err.Error() == "scanning one: no rows in result set" {
-				http.Error(w, "Quotation not found", http.StatusNotFound)
-				return
-			}
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+		if err != nil && err != pgx.ErrNoRows {
+			render.Status(r, http.StatusInternalServerError)
+			render.JSON(w, r, &ErrResponse{Err: err})
 			return
 		}
-		jsonResult, err := json.Marshal(result)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+		if err == pgx.ErrNoRows {
+			render.Status(r, http.StatusNotFound)
+			render.JSON(w, r, ErrNotFound)
 			return
 		}
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		w.Write(jsonResult)
+
+		render.Status(r, http.StatusOK)
+		render.JSON(w, r, result)
 	}
 }

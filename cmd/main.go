@@ -7,10 +7,11 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/boraxpr/go-web-service/db"
 	_ "github.com/boraxpr/go-web-service/docs"
 	"github.com/boraxpr/go-web-service/handlers"
 	dao "github.com/boraxpr/go-web-service/internal/dao"
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joho/godotenv"
 	httpSwagger "github.com/swaggo/http-swagger/v2"
@@ -31,7 +32,7 @@ func main() {
 	if port == "" {
 		port = "8080" // Default to port 8080 if PORT environment variable is not set
 	}
-	secret_key := os.Getenv("SECRET_KEY")
+
 	// Connect to db
 	pool, err := pgxpool.New(context.Background(), os.Getenv("DB_STRING"))
 	if err != nil {
@@ -39,45 +40,43 @@ func main() {
 		os.Exit(1)
 	}
 	defer pool.Close()
-	// Create an instance of App with the database connection
-	app := &db.App{DB: pool}
+	// // Create an instance of App with the database connection
+	// app := &db.App{DB: pool}
 
-	quotationDAO := dao.NewQuotationDao(app)
+	quotationDAO := dao.NewQuotationDao(pool)
+	r := chi.NewRouter()
 
-	mux := http.NewServeMux()
+	r.Use(middleware.Logger)
+	r.Use(middleware.Recoverer)
+	r.Use(middleware.Heartbeat("/ping"))
+	// r.Use(render.SetContentType(render.ContentTypeJSON))
+	// Public Routes
+	r.Group(func(r chi.Router) {
+		r.Get("/swagger*", handlers.SwaggerAuth(httpSwagger.Handler()))
+		// r.Handle("/", handlers.LoggingMiddleware(http.HandlerFunc(handlers.Default(app))))
+		r.Post(
+			"/login", handlers.LoginHandler(),
+		)
 
-	mux.Handle("/swagger/", handlers.SwaggerAuth(httpSwagger.Handler(), secret_key))
-	mux.Handle("/", handlers.LoggingMiddleware(http.HandlerFunc(handlers.Default(app))))
+	})
 
-	// Wrap the PingHandler with both the LoggingMiddleware and AuthMiddleware
-	mux.Handle(
-		"/login",
-		handlers.LoggingMiddleware(
-			http.HandlerFunc(handlers.LoginHandler(secret_key)),
-		),
-	)
+	// Private Routes
+	// Require authentication
+	r.Group(func(r chi.Router) {
+		r.Use(handlers.AuthMiddleware)
+		r.Get(
+			"/quotation", handlers.GetAllQuotations(quotationDAO),
+		)
+		r.Get(
+			"/quotation/{id}", handlers.GetQuotationById(quotationDAO))
+		r.Post(
+			"/session", handlers.SessionHandler,
+		)
+	})
 
-	mux.Handle(
-		"/quotation",
-		handlers.LoggingMiddleware(
-			handlers.AuthMiddleware(http.HandlerFunc(handlers.GetAllQuotations(quotationDAO)), secret_key),
-		),
-	)
-	mux.Handle(
-		"/quotation/",
-		handlers.LoggingMiddleware(
-			handlers.AuthMiddleware(http.HandlerFunc(handlers.GetQuotationById(quotationDAO)), secret_key),
-		),
-	)
-	mux.Handle(
-		"/session",
-		handlers.LoggingMiddleware(
-			handlers.AuthMiddleware(http.HandlerFunc(handlers.SessionHandler), secret_key),
-		),
-	)
 	// Apply CORS middleware to your router
-	handler := corsMiddleware(mux)
-	fmt.Printf("Server listening on %s", port)
+	handler := corsMiddleware(r)
+	fmt.Printf("Server listening on %s\n", port)
 	if err := http.ListenAndServe(":"+port, handler); err != nil {
 		fmt.Printf("Error starting server: %s\n", err)
 	}

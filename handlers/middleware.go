@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -32,8 +33,9 @@ func VerifyToken(requestToken string, SecretKey string) bool {
 	}
 }
 
-func SwaggerAuth(next http.Handler, secretKey string) http.HandlerFunc {
+func SwaggerAuth(next http.Handler) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		secretKey := os.Getenv("SECRET_KEY")
 		user, token, ok := r.BasicAuth()
 		if !ok || user != "admin" || !VerifyToken(token, secretKey) {
 			w.Header().Set("WWW-Authenticate", `Basic realm="Please enter your token"`)
@@ -53,10 +55,11 @@ func LoggingMiddleware(next http.Handler) http.Handler {
 		})
 }
 
-func AuthMiddleware(next http.Handler, SecretKey string) http.Handler {
+func AuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
 			requestToken := r.Header.Get("Cookie")
+			SecretKey := os.Getenv("SECRET_KEY")
 
 			if !VerifyToken(requestToken, SecretKey) {
 				http.Error(w, "Unauthorized", http.StatusUnauthorized)
