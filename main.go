@@ -3,9 +3,9 @@ package main
 import (
 	"context"
 	"fmt"
-	"log"
 	"net/http"
 	"os"
+	"strconv"
 
 	_ "github.com/boraxpr/go-web-service/docs"
 	"github.com/boraxpr/go-web-service/handlers"
@@ -13,7 +13,6 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/joho/godotenv"
 	httpSwagger "github.com/swaggo/http-swagger/v2"
 )
 
@@ -24,13 +23,11 @@ import (
 // @host
 // @BasePath /
 func main() {
-	// Load environment variables from a .env file
-	if err := godotenv.Load(); err != nil {
-		log.Fatalf("Error loading .env file: %v", err)
-	}
+
 	port := os.Getenv("PORT")
-	if port == "" {
-		port = "8080" // Default to port 8080 if PORT environment variable is not set
+	intPort, err := strconv.Atoi(port)
+	if err != nil {
+		intPort = 8080 // Default to port 8080 if PORT environment variable is not set
 	}
 
 	// Connect to db
@@ -76,8 +73,8 @@ func main() {
 
 	// Apply CORS middleware to your router
 	handler := corsMiddleware(r)
-	fmt.Printf("Server listening on %s\n", port)
-	if err := http.ListenAndServe(":"+port, handler); err != nil {
+	fmt.Printf("Server listening on %s\n", strconv.Itoa(intPort))
+	if err := http.ListenAndServe(":"+ strconv.Itoa(intPort), handler); err != nil {
 		fmt.Printf("Error starting server: %s\n", err)
 	}
 }
